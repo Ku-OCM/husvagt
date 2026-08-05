@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HusVagt Admin (demo)</title>
+<style>
+  body{font-family:-apple-system,system-ui,sans-serif;background:#F5F7F7;color:#12211F;margin:0;padding:24px 16px}
+  main{max-width:760px;margin:0 auto}
+  h1{margin:0;font-size:24px}
+  .sub{color:#5C6B69;margin:4px 0 18px}
+  .card{background:#fff;border:1px solid #E1E7E6;border-radius:14px;padding:18px;margin-bottom:14px}
+  .kpi{font-size:38px;font-weight:800;color:#0E7C7B;margin:4px 0}
+  .badge{border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+  a{color:#0E7C7B;font-weight:700}
+  .mono{font-family:ui-monospace,monospace;font-size:13px;margin:6px 0}
+  small{color:#5C6B69}
+  h2{font-size:17px;margin:0 0 10px}
+</style>
+</head>
+<body>
+<main>
+  <h1>🛠️ HusVagt Admin <span style="font-weight:400;color:#5C6B69">(demo)</span></h1>
+  <p class="sub">Alarmer, upsell-måling og hændelseslog · <a href="index.html">← forside</a></p>
+
+  <div class="card"><h2>💰 Upsell fake door (konverteringssignal)</h2><div id="upsell"></div></div>
+  <div class="card"><h2>🔔 Alarmer</h2><div id="alerts"></div></div>
+  <div class="card"><h2>📜 Hændelseslog</h2><div id="audit"></div></div>
+</main>
+<script>
+function ls(k){try{return JSON.parse(localStorage.getItem("husvagt-demo:"+k)||"[]")}catch(e){return[]}}
+const TRIAGE={KRITISK_NU:["KRITISK","#D64545"],UNDERSOEG:["UNDERSØG","#B07A17"],SANDSYNLIG_STOEJ:["STØJ","#2E9E5B"]};
+function render(){
+  const up=ls("upsell");
+  const byTier={};up.forEach(u=>{const k=u.tier+" · "+(u.context==="after_alarm"?"efter alarm":"efter booking");byTier[k]=(byTier[k]||0)+1});
+  document.getElementById("upsell").innerHTML=
+    `<div class="kpi">${up.length} klik</div>`+
+    (up.length?Object.entries(byTier).map(([k,v])=>`<p style="margin:4px 0"><strong>${k}</strong> — ${v} klik</p>`).join(""):
+    '<small>Ingen klik endnu. Luk en kritisk alarm i appen og tryk på Standard-tilbuddet.</small>');
+
+  const al=ls("alerts");
+  document.getElementById("alerts").innerHTML=al.length?al.map(a=>{
+    const [label,color]=TRIAGE[a.triage]||[a.triage,"#5C6B69"];
+    return `<div style="margin-bottom:12px"><strong>${a.title} — ${a.roomName}</strong> <span class="badge" style="background:${color}22;color:${color}">${label}</span>${a.verified?' <small>✅ verificeret</small>':''}<br><small>${a.triageReason}</small><br><small>status: ${a.status} · ${new Date(a.createdAt).toLocaleString("da-DK")}</small></div>`;
+  }).join(""):'<small>Ingen alarmer endnu — udløs et scenarie i appen.</small>';
+
+  const au=ls("audit");
+  document.getElementById("audit").innerHTML=au.length?au.slice(0,30).map(e=>
+    `<p class="mono">${new Date(e.createdAt).toLocaleTimeString("da-DK")} · <strong>${e.actor}</strong> · ${e.action}${e.detail?' <span style="color:#5C6B69">'+JSON.stringify(e.detail)+'</span>':''}</p>`
+  ).join(""):'<small>Tom — brug appen, så fyldes loggen.</small>';
+}
+render();
+setInterval(render,3000);
+</script>
+</body>
+</html>

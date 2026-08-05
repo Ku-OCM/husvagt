@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HusVagt — demo</title>
+<style>
+  body{font-family:-apple-system,system-ui,sans-serif;background:#F5F7F7;color:#12211F;margin:0;padding:28px 20px;display:flex;justify-content:center}
+  .wrap{max-width:640px;width:100%}
+  h1{color:#0E7C7B;margin:0 0 4px;font-size:30px}
+  .sub{color:#5C6B69;margin:0 0 22px}
+  .card{background:#fff;border:1px solid #E1E7E6;border-radius:16px;padding:22px;margin-bottom:16px}
+  .card h2{font-size:17px;margin:0 0 8px}
+  a.big{display:block;background:#0E7C7B;color:#fff;text-align:center;border-radius:12px;padding:16px;font-size:17px;font-weight:700;text-decoration:none;margin:10px 0}
+  a.ghost{display:block;background:#fff;border:1.5px solid #0E7C7B;color:#0E7C7B;text-align:center;border-radius:12px;padding:13px;font-size:15px;font-weight:700;text-decoration:none;margin:10px 0}
+  ol{padding-left:20px;line-height:1.7;font-size:15px;margin:0}
+  .note{font-size:13px;color:#5C6B69}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🏠 HusVagt</h1>
+  <p class="sub">Ro i maven for dit hus · Leveret af Østermann &amp; Knopp VVS · <strong>demo</strong></p>
+
+  <div class="card">
+    <h2>📱 Kunde-appen</h2>
+    <p class="note">Hele oplevelsen: onboarding → alarm → AI-rådgiver → booking → upsell. Kører 100 % i din browser med simulerede sensorer.</p>
+    <a class="big" href="app/">Åbn appen</a>
+  </div>
+
+  <div class="card">
+    <h2>🔧 Håndværker &amp; drift</h2>
+    <p class="note">Book en opgave i appen først — så dukker den op her (på samme enhed).</p>
+    <a class="ghost" href="partner.html">Partner-indbakke</a>
+    <a class="ghost" href="admin.html">Admin: hændelser &amp; upsell-måling</a>
+  </div>
+
+  <div class="card">
+    <h2>▶ Prøv dette (2 min.)</h2>
+    <ol>
+      <li>Åbn appen og gennemfør onboarding — sidste trin udløser en <strong>vandalarm</strong> 💧</li>
+      <li>Læs AI-triagens begrundelse → tryk <strong>Få hjælp nu</strong></li>
+      <li>Rådgiveren giver stop-skaden-førstehjælp med kilde</li>
+      <li><strong>Book håndværker</strong> → se opgaven i partner-indbakken</li>
+      <li>Luk alarmen → <strong>upsell-tilbud</strong> (måles i admin)</li>
+      <li>Prøv <em>"Fugt-spike ved badning"</em> på forsiden — giver bevidst INGEN alarm</li>
+    </ol>
+  </div>
+
+  <p class="note">Demoen gemmer kun data lokalt i din browser. Den fulde version (rigtig backend, Postgres, Claude-rådgiver, Expo-app) ligger i repoet — se README.</p>
+</div>
+</body>
+</html>
