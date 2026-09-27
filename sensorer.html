@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HusVagt — sensortilstand</title>
+<style>
+  :root{
+    --teal:#0E7C7B; --ink:#12211F; --mut:#5C6B69; --line:#E1E7E6; --page:#F5F7F7;
+    --red:#D64545; --amber:#B07A17; --green:#2E9E5B;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,system-ui,sans-serif;background:var(--page);color:var(--ink);margin:0;padding:28px 20px;display:flex;justify-content:center;line-height:1.5}
+  .wrap{max-width:780px;width:100%}
+  h1{color:var(--teal);margin:0 0 4px;font-size:29px}
+  .sub{color:var(--mut);margin:0 0 6px;font-size:15px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:16px}
+  .card h2{font-size:17px;margin:0 0 10px}
+  .note{font-size:13.5px;color:var(--mut)}
+  .live-banner{background:#FFF4E5;border:1px solid #F0C88A;border-radius:12px;padding:13px 16px;margin:16px 0 20px;font-size:14px}
+  .live-banner strong{color:#8A5A00}
+  .counts{display:flex;gap:30px;flex-wrap:wrap;align-items:flex-start;margin-bottom:6px}
+  .counts .n{font-size:34px;font-weight:800;line-height:1}
+  .counts small{color:var(--mut);font-size:13px}
+  .badge{border-radius:999px;padding:2px 10px;font-size:11px;font-weight:800;white-space:nowrap;letter-spacing:.3px}
+  .b-live{background:#2E9E5B22;color:var(--green)}
+  .b-delayed{background:#B07A1722;color:var(--amber)}
+  .b-silent{background:#D6454522;color:var(--red)}
+  .row{display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid #F0F3F3;flex-wrap:wrap}
+  .row:first-of-type{border-top:none}
+  .row .who{flex:1;min-width:210px}
+  .row .nm{font-weight:600;font-size:14px}
+  .row code{font-size:11px;color:var(--mut);word-break:break-all}
+  .row .val{text-align:right;min-width:112px}
+  .row .v{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+  .row .v.none{color:#A6B2B1;font-weight:600}
+  .row .ago{font-size:12px;color:var(--mut)}
+  .row .ago.bad{color:var(--red)}
+  .grp-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px}
+  .grp-head strong{font-size:16px}
+  .grp-head small{color:var(--mut);font-size:12.5px}
+  .urgent{border:2px solid var(--red)}
+  .urgent h2{color:var(--red)}
+  .ask{background:#fff;border-left:4px solid var(--teal)}
+  .ask ol{padding-left:20px;margin:8px 0 0;font-size:14.5px}
+  .ask li{margin-bottom:9px}
+  .foot{font-size:12.5px;color:var(--mut);text-align:center;padding:10px 0 4px}
+  a{color:var(--teal)}
+  @media(max-width:520px){.row .val{text-align:left;min-width:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sensortilstand</h1>
+  <p class="sub">Home Assistant · kasperbirk.dk · Østermann &amp; Knopp VVS</p>
+  <p class="sub" id="snaptime"></p>
+
+  <div class="live-banner">
+    <strong>Dette er rigtige måledata</strong> — ikke demoen. Øjebliksbillede af alle 66 følere på den
+    kørende server. Resten af <a href="index.html">demo-sitet</a> kører på simulerede sensorer; denne side gør ikke.
+  </div>
+
+  <div class="card">
+    <div class="counts">
+      <div><div class="n" style="color:var(--red)" id="c-silent">–</div><small>ingen kontakt</small></div>
+      <div><div class="n" style="color:var(--amber)" id="c-delayed">–</div><small>forsinket</small></div>
+      <div><div class="n" style="color:var(--green)" id="c-live">–</div><small>live</small></div>
+      <p class="note" style="flex:1;min-width:250px;margin:0">
+        <strong>Tilstanden da øjebliksbilledet blev taget.</strong><br>
+        En føler melder normalt <strong>hvert minut</strong> (målt: 183 målinger på 180 minutter).
+        Over 5 min. = forsinket, over 2 timer = ingen kontakt.
+        <br><br>Målinger fra følere uden kontakt <strong>skjules</strong>. En 11 dage gammel temperatur
+        er ikke en svag oplysning — den er en forkert oplysning.
+      </p>
+    </div>
+  </div>
+
+  <div class="card urgent">
+    <h2>Pumpeopsætningen sender ikke</h2>
+    <p class="note" style="margin-top:0">
+      Alle seks MBS3000-tryktransmittere er tavse. Det er præcis de målere, kundevejledningen
+      handler om — en kunde, der installerer appen i dag og følger vejledningen, ser ingenting.
+    </p>
+    <div id="pressure"></div>
+  </div>
+
+  <div id="groups"></div>
+
+  <div class="card ask">
+    <h2>Det vi mangler svar på</h2>
+    <ol>
+      <li><strong>Skete der noget den 16. september kl. 08:12?</strong> Opdatering, genstart,
+          strømafbrydelse, netværksændring? Næsten alt tav på præcis samme tidspunkt, hvilket peger
+          på én fælles årsag frem for mange uafhængige hardwarefejl.</li>
+      <li><strong>Hvilke adresser hører grupperne til?</strong> Kun 014 er bekræftet (Ørbygård).
+          Resten er ikke områdesat i Home Assistant, så vi kan ikke placere målingerne. Gruppe 018
+          sender fint lige nu, men vi ved ikke hvorfra.</li>
+      <li><strong>Kan trykmålerne prioriteres først?</strong> Uden dem har vi ingen data på det,
+          produktet faktisk sælges på.</li>
+    </ol>
+  </div>
+
+  <p class="foot">Øjebliksbillede — siden opdaterer ikke af sig selv. Aldersangivelserne regnes ud, når du åbner siden.</p>
+</div>
+
+<script>
+// Øjebliksbillede hentet fra Home Assistants /api/states.
+// Format: [entity_id, værdi (null = unknown/unavailable), enhed, sidst set (ISO)]
+const SNAPSHOT_AT = "2026-09-27T20:36:00Z";
+const D = "2026-09-16T08:12:00Z";  // tidspunktet hvor næsten alt tav
+const N = "2026-09-27T20:36:00Z";
+const DATA = [
+  ["mbs3000_v1_003", null, "bar", D, "Tryk før filter"],
+  ["mbs3000_v1_004", null, "bar", D, "Tryk efter filter"],
+  ["mbs3000_v1_005", null, "bar", D, "Tryk centralvarme fremløb"],
+  ["mbs3000_v1_006", null, "bar", D, "Før filter"],
+  ["mbs3000_v1_001", null, "bar", D, "MBS3000-V1-001"],
+  ["mbs3000_v1_002", null, "bar", D, "MBS3000-V1-002"],
+  ["005_og_006_tryk_forskel", null, "", D, "005 og 006 tryk forskel (beregnet)"],
+
+  ["unihub_v4_014_1_temperature", 29.31, "°C", N],
+  ["unihub_v4_014_2_temperature", 30.81, "°C", N],
+  ["unihub_v4_014_3_temperature", 37.25, "°C", N],
+  ["unihub_v4_018_1_temperature", 37.44, "°C", N],
+  ["unihub_v4_018_1_humidity", 48.10, "%", "2026-09-27T19:56:00Z"],
+  ["unihub_v4_018_2_temperature", 30.25, "°C", N],
+  ["unihub_v4_018_3_temperature", 31.31, "°C", "2026-09-27T20:33:00Z"],
+
+  ["unihub_v4_010_1_temperature", 22.40, "°C", D],
+  ["unihub_v4_010_1_humidity", 65.30, "%", D],
+  ["unihub_v4_010_2_temperature", 22.40, "°C", D],
+  ["unihub_v4_010_2_humidity", 65.50, "%", D],
+  ["unihub_v4_010_3_temperature", 21.38, "°C", D],
+  ["unihub_v4_013_1_temperature", 22.90, "°C", D],
+  ["unihub_v4_013_1_humidity", 30.50, "%", D],
+  ["unihub_v4_013_2_temperature", 23.20, "°C", D],
+  ["unihub_v4_013_2_humidity", 28.70, "%", D],
+  ["unihub_v4_015_1_temperature", 53.44, "°C", D],
+  ["unihub_v4_015_3_temperature", null, "°C", D],
+  ["unihub_v4_016_1_temperature", 25.20, "°C", D],
+  ["unihub_v4_016_1_humidity", 23.80, "%", D],
+  ["unihub_v4_017_3_temperature", null, "°C", D],
+  ["unihub_v4_017_3_humidity", null, "%", D],
+  ["unihub_v4_019_1_temperature", null, "°C", D],
+  ["unihub_v4_019_1_humidity", null, "%", D],
+  ["unihub_v4_019_2_temperature", 20.50, "°C", D],
+  ["unihub_v4_019_2_humidity", 48.00, "%", D],
+  ["unihub_v4_021_2_temperature", 40.06, "°C", D],
+  ["unihub_v4_026_2_temperature", 40.69, "°C", D],
+  ["unihub_v4_026_3_temperature", 53.75, "°C", D],
+  ["unihub_v4_027_1_temperature", 52.69, "°C", D],
+  ["unihub_v4_027_2_temperature", 42.44, "°C", D],
+  ["unihub_v4_030_3_temperature", null, "°C", D],
+  ["unihub_v4_030_3_humidity", null, "%", D],
+
+  ["dht22_v1_003_temperature", null, "°C", D],
+  ["dht22_v1_003_humidity", null, "%", D],
+];
+// DHT22-V2: grupperne 005-008, tre kanaler hver, temperatur + fugt. Alle tavse.
+for (const g of ["005","006","007","008"]) {
+  for (const k of ["1","2","3"]) {
+    DATA.push([`dht22_v2_${g}_${k}_temperature`, null, "°C", D]);
+    DATA.push([`dht22_v2_${g}_${k}_humidity`, null, "%", D]);
+  }
+}
+
+const ADRESSER = { "014": "Ørbygård" };   // eneste bekræftede
+
+// VIGTIGT: tilstanden bedømmes i forhold til det tidspunkt, øjebliksbilledet blev taget
+// — ikke i forhold til nu. Ellers ville siden med tiden påstå, at de velfungerende
+// følere også var døde, blot fordi sidens data blev gamle. Hvor gammelt selve
+// øjebliksbilledet er, står i stedet tydeligt øverst.
+const SNAP_MS = Date.parse(SNAPSHOT_AT);
+function health(iso) {
+  const min = Math.max(0, Math.round((SNAP_MS - Date.parse(iso)) / 60000));
+  const state = min < 5 ? "live" : min < 120 ? "delayed" : "silent";
+  return { state, min };
+}
+function ago(min) {
+  if (min < 1) return "Lige nu";
+  if (min < 60) return min + " min. siden";
+  const t = Math.floor(min / 60);
+  if (t < 24) return t + " t. siden";
+  const d = Math.floor(t / 24);
+  return d + (d === 1 ? " dag siden" : " dage siden");
+}
+function pretty(id) {
+  const m = id.match(/^(unihub_v4|dht22_v[12])_(\d{3})_(\d+)_(temperature|humidity)$/);
+  if (!m) return null;
+  const maal = m[4] === "humidity" ? "Fugt" : "Temperatur";
+  return { maaling: maal, gruppe: m[2], kanal: m[3] };
+}
+
+function rowHtml(d) {
+  const [id, val, unit, seen, navn] = d;
+  const h = health(seen);
+  const p = pretty(id);
+  const label = navn || (p ? `${p.maaling} · kanal ${p.kanal}` : id);
+  const badge = h.state === "live" ? "b-live" : h.state === "delayed" ? "b-delayed" : "b-silent";
+  const txt = h.state === "live" ? "LIVE" : h.state === "delayed" ? "FORSINKET" : "INGEN KONTAKT";
+  // Værdien vises kun når føleren har kontakt.
+  const show = h.state !== "silent" && val !== null;
+  return `<div class="row">
+    <span class="badge ${badge}">${txt}</span>
+    <div class="who"><div class="nm">${label}</div><code>sensor.${id}</code></div>
+    <div class="val">
+      <div class="v ${show ? "" : "none"}">${show ? val.toFixed(1) + " " + unit : "—"}</div>
+      <div class="ago ${h.state === "silent" ? "bad" : ""}">${ago(h.min)}</div>
+    </div>
+  </div>`;
+}
+
+// Tællere
+const counts = { live: 0, delayed: 0, silent: 0 };
+DATA.forEach(d => counts[health(d[3]).state]++);
+document.getElementById("c-live").textContent = counts.live;
+document.getElementById("c-delayed").textContent = counts.delayed;
+document.getElementById("c-silent").textContent = counts.silent;
+const snapAgeMin = Math.max(0, Math.round((Date.now() - SNAP_MS) / 60000));
+document.getElementById("snaptime").innerHTML =
+  "Øjebliksbillede taget <strong>" + new Date(SNAPSHOT_AT).toLocaleString("da-DK") +
+  "</strong> · " + DATA.length + " følere · <span id='snapage'></span>";
+const ageEl = document.getElementById("snapage");
+if (snapAgeMin < 90) {
+  ageEl.textContent = "hentet " + ago(snapAgeMin);
+} else {
+  ageEl.innerHTML = "<strong style='color:var(--amber)'>siden er " + ago(snapAgeMin) +
+    " gammel — tilstanden kan have ændret sig</strong>";
+}
+
+// Trykmålerne øverst
+document.getElementById("pressure").innerHTML =
+  DATA.filter(d => /mbs3000|tryk_forskel/.test(d[0])).map(rowHtml).join("");
+
+// Resten grupperet efter hardware + gruppenummer
+const rest = DATA.filter(d => !/mbs3000|tryk_forskel/.test(d[0]));
+const groups = {};
+rest.forEach(d => {
+  const m = d[0].match(/^(unihub_v4|dht22_v[12])_(\d{3})/);
+  const key = m ? `${m[1]}|${m[2]}` : "andet|—";
+  (groups[key] ??= []).push(d);
+});
+const RANK = { silent: 0, delayed: 1, live: 2 };
+const ordered = Object.entries(groups).sort((a, b) => {
+  const s = l => l[1].filter(d => health(d[3]).state === "silent").length;
+  const live = l => l[1].filter(d => health(d[3]).state === "live").length;
+  return live(b) - live(a) || s(b) - s(a);
+});
+document.getElementById("groups").innerHTML = ordered.map(([key, list]) => {
+  const [hw, grp] = key.split("|");
+  const adresse = ADRESSER[grp];
+  const silent = list.filter(d => health(d[3]).state === "silent").length;
+  list.sort((a, b) => RANK[health(a[3]).state] - RANK[health(b[3]).state]);
+  const hwName = hw === "unihub_v4" ? "UniHub-V4" : hw === "dht22_v2" ? "DHT22-V2" : hw === "dht22_v1" ? "DHT22-V1" : hw;
+  return `<div class="card">
+    <div class="grp-head">
+      <strong>${hwName} · gruppe ${grp}</strong>
+      <small>${adresse ? adresse : "⚠ adresse ikke bekræftet"}</small>
+    </div>
+    <div class="note" style="margin-bottom:8px">${silent} af ${list.length} uden kontakt</div>
+    ${list.map(rowHtml).join("")}
+  </div>`;
+}).join("");
+</script>
+</body>
+</html>
